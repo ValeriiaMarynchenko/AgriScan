@@ -1,7 +1,5 @@
-from django.db import models
-
 from django.contrib.gis.db import models
-from apps.users.models import CustomUser  # Припустимо, у вас є CustomUser
+from backend.apps.users.models import CustomUser  # Припустимо, у вас є CustomUser
 
 
 class Field(models.Model):

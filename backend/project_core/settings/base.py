@@ -24,8 +24,8 @@ SECRET_KEY = 'django-insecure-ri)hd7&x5_hj(ho1w9ai#1j-r!n&r1li)ju6!t)c#=&ovdcwd^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['http://localhost:3000']
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition
 
@@ -36,6 +36,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'djoser',
+    'rest_framework_simplejwt',
+    'rest_framework',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -78,7 +82,7 @@ DATABASES = {
         'ENGINE': 'django.contrib.gis.db.backends.postgis', # Зверніть увагу на postgis
         'NAME': 'agromonitoring_db',
         'USER': 'postgres',
-        'PASSWORD': 'your_password', # TODO
+        'PASSWORD': 'root', #
         'HOST': 'db', # TODO Ім'я сервісу з docker-compose
         'PORT': '5432',
     }
@@ -111,6 +115,32 @@ REST_FRAMEWORK = {
     ),
 }
 
+SIMPLE_JWT = {
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+DJOSER = {
+    # Вказуємо, що для входу використовується 'email'
+    'USER_ID_FIELD': 'id',
+    'USER_CREATE_PASSWORD_RETYPE': True,
+    'USERNAME_RESET_CONFIRM_URL': '#/username/reset/confirm/{uid}/{token}',
+    'PASSWORD_RESET_CONFIRM_URL': '#/password/reset/confirm/{uid}/{token}',
+    'ACTIVATION_URL': '#/activate/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': False,  # Зазвичай вимикають, якщо не потрібна активація
+
+    'SERIALIZERS': {
+        # Використовуємо стандартний серіалізатор користувача,
+        # або створюємо свій, якщо потрібно відобразити нові поля
+        'user_create': 'apps.users.serializers.UserCreateSerializer',
+        'user': 'apps.users.serializers.CustomUserSerializer',
+    },
+    'SOCIAL_AUTH_ALLOWED_REDIRECTS': ['http://localhost:3000/google-auth-callback'],  # Для OAuth
+    # Налаштування провайдерів Google та ін.
+    'SOCIAL_AUTH': {
+        'GOOGLE_OAUTH2': 'djoser.social.backends.google.GoogleOAuth2'
+    }
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -133,3 +163,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'users.CustomUser'
+

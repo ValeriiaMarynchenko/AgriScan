@@ -1,0 +1,29 @@
+services:
+  # 1. Сервіс Redis (брокер та сховище)
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data # Для збереження даних (персистентність)
+
+  # 2. Оновлення залежностей для бекенду
+  backend:
+    # ...
+    depends_on:
+      - db
+      - redis # Додано залежність від redis
+
+  # 3. Оновлення залежностей для worker'а
+  celery_worker:
+    # ...
+    command: celery -A project_core worker -l info
+    depends_on:
+      - redis # Залежить від redis
+      - db
+
+
+volumes:
+  redis_data:

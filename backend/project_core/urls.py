@@ -1,24 +1,12 @@
 """
 URL configuration for project_core project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+...
 """
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from apps.fields.views import FieldViewSet
-# ... імпорт інших ViewSet
+
+from ..apps.fields.views import FieldViewSet # Assuming this path is correct
 
 router = DefaultRouter()
 router.register(r'fields', FieldViewSet)
@@ -27,13 +15,13 @@ router.register(r'fields', FieldViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # API endpoints for applications
     path('api/', include(router.urls)),
-    # Маршрути для JWT (для автентифікації)
-    path('api/auth/', include('rest_framework_simplejwt.urls')),
-    # path('api/auth/', include('djoser.urls')), # Альтернатива для повного Auth
+
+    # Djoser and JWT routes, all prefixed with 'api/auth/'
+    path('api/auth/', include('djoser.urls')),
+    path('auth/jwt/create/', include('djoser.urls.jwt')), # Routes for JWT (Token / Token Refresh)
+    path('api/auth/', include('djoser.social.urls')), # Routes for OAuth
+
+    path('api/reports/generate/', include('apps.reports.urls')),
 ]
-
-
-# urlpatterns = [
-#     path('admin/', admin.site.urls),
-# ]
