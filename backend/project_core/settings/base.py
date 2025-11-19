@@ -79,11 +79,11 @@ DATABASES = {
     'default': {
         # 'ENGINE': 'django.db.backends.sqlite3',
         # 'NAME': BASE_DIR / 'db.sqlite3',
-        'ENGINE': 'django.contrib.gis.db.backends.postgis', # Зверніть увагу на postgis
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'agromonitoring_db',
         'USER': 'postgres',
-        'PASSWORD': 'root', #
-        'HOST': 'db', # TODO Ім'я сервісу з docker-compose
+        'PASSWORD': 'root',
+        'HOST': 'db',
         'PORT': '5432',
     }
 }

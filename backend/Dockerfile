@@ -5,8 +5,7 @@
 
 FROM python:3.14-slim
 
-# Встановлюємо залежності для PostGIS/PostgreSQL
-# Це потрібно для psycopg2 та libgdal (для PostGIS)
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \

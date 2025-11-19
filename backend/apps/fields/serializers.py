@@ -1,11 +1,10 @@
-from rest_framework_gis.serializers import GeoFeatureModelSerializer
+from rest_framework import serializers
 from .models import Field
 
-class FieldSerializer(GeoFeatureModelSerializer):
-    """Серіалізатор для полів (використовує GeoJSON)"""
+class FieldSerializer(serializers.ModelSerializer):
+    """Серіалізатор для полів (використовує стандартний ModelSerializer)"""
     class Meta:
         model = Field
-        # Використовуйте 'geometry' як поле GeoJSON
-        geo_field = 'geometry'
-        fields = ('id', 'name', 'area_ha', 'owner')
+        # Note: 'geometry' is replaced by 'geometry_data' (assuming you changed the model)
+        fields = ('id', 'name', 'area_ha', 'owner', 'geometry_data')
         read_only_fields = ('owner', 'area_ha')
