@@ -90,11 +90,11 @@ services:
   # ----------------------------------------------------
   frontend:
     build:
-      context: frontend
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: agriscan_frontend
     ports:
-      - "3000:3000" # Или 80, если вы используете Nginx
+      - "80:80" # Или 80, если вы используете Nginx
     depends_on:
       - backend
 
