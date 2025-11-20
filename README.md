@@ -10,33 +10,65 @@ project-agro-monitoring/
 
 
 
-frontend/src/
-├── api/             # Функції для взаємодії з Django API (Axios)
-├── components/      # Перевикористовувані компоненти (Buttons, Inputs)
-├── features/
-│   ├── Auth/        # Компоненти для авторизації, реєстрації, профілю
-│   └── Analysis/    # Компоненти для завантаження фото та відображення результатів
-├── pages/           # Компоненти, прив'язані до маршрутів (Login, Register, Dashboard)
-├── context/         # Стан користувача (AuthContext)
-└── App.html           # Головний роутинг
+frontend/
+├───public
+├───srs
+│    │   App.css
+│    │   App.jsx
+│    │   index.css
+│    │   index.html
+│    │   main.jsx
+│    │   
+│    ├───api
+│    │       api.js
+│    │       
+│    ├───assets
+│    │       react.svg
+│    │       
+│    ├───components
+│    │       Card.jsx
+│    │       Header.jsx
+│    │       
+│    ├───context
+│    │       AuthContext.js
+│    │       
+│    ├───features
+│    │   ├───Analysis
+│    │   │       analysisService.js
+│    │   │       authService.js
+│    │   │       UploadForm.js
+│    │   │       
+│    │   └───Auth
+│    │           AuthProvider.jsx
+│    │           
+│    └───pages
+│            DashboardPage.jsx
+│            LoginPage.jsx
+│            Profile.jsx
+│            RegisterPage.jsx
+├─── .gitignoge
+├─── Dockerfile
+├─── eslint.config.js
+├─── index.html
+├─── nginx.conf
+├─── package.json
+├─── package-lock.json
+├─── README.md
+└─── vite.config.js
+
 
 
 
 backend/
-├── venv/             # Віртуальне оточення Python
-├── project_core/     # Головна директорія проєкту (settings.py, urls.py)
-│   ├── settings/     # Конфігурації (base.py, prod.py, dev.py)
-│   └── urls.py
-├── apps/             # Директорія для логічних додатків
-│   ├── users/        # Керування користувачами та Auth (JWT, OAuth)
-│   │   ├── migrations/
-│   │   ├── models.py
-│   │   └── views.py (API Endpoints)
-│   ├── fields/       # Керування полями та геопросторовими даними (PostGIS)
-│   ├── analysis/     # Логіка для запуску завдань ШІ та зберігання метаданих
-│   └── reports/      # Генерація звітів
-├── requirements.txt  # Залежності Python
-├── manage.py         # Скрипт керування Django
+├── venv/
+├── models/
+│   ├── auth_service.py
+│   └── user.py
+├── dependencies.py
+├── tasks.py
+├── settings
+├── requirements.txt
+├── main.py
 └── Dockerfile
 
 
@@ -55,9 +87,8 @@ ai_service/
 
 infra/
 ├── docker/
-│   ├── db/           # Конфігурація для PostgreSQL/PostGIS
+│   ├── db/           # Конфігурація для MongoDB
 │   └── nginx/        # Конфігурація для реверс-проксі
-├── k8s/              # Конфігурації Kubernetes (якщо використовується)
 └── logging/          # Конфігурація для логування (ELK stack, Prometheus)
 
 
