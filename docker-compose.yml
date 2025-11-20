@@ -44,9 +44,9 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: agriscan_backend
-    command: python manage.py runserver 0.0.0.0:8000 # Замените на вашу команду
+    command: python manage.py runserver # Замените на вашу команду
     volumes:
-      - ./backend:/app
+      - ./backend:/apps
     ports:
       - "8000:8000"
     depends_on:
@@ -61,7 +61,7 @@ services:
       MINIO_SECRET_KEY: minio_secure_password
       MINIO_BUCKET_NAME: agriscan-files
       # Общие настройки
-      DJANGO_SECRET_KEY: <ВАШ_СЕКРЕТНЫЙ_КЛЮЧ>
+      DJANGO_SECRET_KEY: 'django-insecure-ri)hd7&x5_hj(ho1w9ai#1j-r!n&r1li)ju6!t)c#=&ovdcwd^'
 
   # ----------------------------------------------------
   # 4. СЛУЖБА AI SERVICE (FASTAPI/FLASK)

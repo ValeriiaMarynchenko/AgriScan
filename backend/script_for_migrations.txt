@@ -1,5 +1,0 @@
-# Створення міграцій для ваших моделей
-python manage.py makemigrations
-
-# Застосування міграцій до бази даних
-python manage.py migrate

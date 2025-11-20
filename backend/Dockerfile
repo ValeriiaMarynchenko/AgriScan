@@ -3,7 +3,7 @@
 #
 #ENTRYPOINT ["top", "-b"]
 
-FROM python:3.14-slim
+FROM python:3.12
 
 
 RUN apt-get update && \
