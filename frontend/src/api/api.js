@@ -1,33 +1,6 @@
-//
-//
-//
-// // Base URL для вашого Django бекенду
-// export const API_BASE_URL = "http://localhost/api"; //TODO change to real and add it to .conf
-//
-//
-// // Key для зберігання токенів у локальному сховищі
-// export const TOKEN_KEY = 'accessToken';  //TODO change and add it to .conf
-// export const REFRESH_KEY = 'refreshToken';  //TODO change and add it to .conf
-//
-//
-// export async function apiRequest(endpoint, method = "GET", body = null, token = null) {
-//     const headers = {"Content-Type": "application/json",};
-//     if (token) headers["Authorization"] = `Bearer ${token}`;
-//
-//     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-//         method,
-//         headers,
-//         body: body ? JSON.stringify(body) : null,
-//     });
-//
-//     const data = await response.json().catch(() => ({}));
-//
-//     if (!response.ok) {
-//         throw new Error(data.detail || data.error || "Помилка запиту");
-//     }
-//
-//     return data;
-// }
+export const TOKEN_KEY = 'agriscan_access_token';
+export const REFRESH_KEY = 'agriscan_refresh_token';
+
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 export async function apiRequest(path, method = "GET", body = null, token = null) {
@@ -54,3 +27,56 @@ export async function apiRequest(path, method = "GET", body = null, token = null
   if (res.status === 204) return null;
   return res.json();
 }
+
+/**
+ * secureFetch - обгортка над стандартним fetch.
+ * Автоматично додає токен авторизації та базовий URL.
+ * * @param {string} endpoint - частина шляху, наприклад '/auth/users/me/'
+ * @param {object} options - налаштування запиту (method, body, headers...)
+ * @param {boolean} requiresAuth - чи додавати токен (за замовчуванням true)
+ */
+export const secureFetch = async (endpoint, options = {}, requiresAuth = true) => {
+    // 1. Формуємо повний URL
+    // Видаляємо зайві слеші, щоб не було http://loc..//api
+    const url = `${BASE_URL}${endpoint}`;
+
+    // 2. Налаштовуємо заголовки
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers, // Додаємо кастомні заголовки, якщо вони передані
+    };
+
+    // 3. Додаємо токен, якщо потрібно
+    if (requiresAuth) {
+        const token = localStorage.getItem(TOKEN_KEY);
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+    }
+
+    // 4. Формуємо конфігурацію запиту
+    const config = {
+        ...options,
+        headers,
+    };
+
+    // 5. Виконуємо запит
+    const response = await fetch(url, config);
+
+    // 6. (Опціонально) Обробка 401 Unauthorized (якщо токен протух)
+    if (response.status === 401 && requiresAuth) {
+        // Тут можна додати логіку оновлення токена (refresh token flow)
+        // Або просто очистити сторінку
+        // localStorage.removeItem(TOKEN_KEY);
+        // window.location.href = '/login';
+        throw new Error('Unauthorized');
+    }
+
+    if (!response.ok) {
+        // Спробуємо отримати текст помилки від сервера
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Request failed with status ${response.status}`);
+    }
+
+    return response;
+};

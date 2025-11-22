@@ -36,7 +36,7 @@ const ProfilePage = () => {
             });
 
             await response.json();
-            await loadUserFromToken(); // Оновлюємо глобальний стан
+            await loadUserFromToken();
             setMessage('Профіль успішно оновлено!');
         } catch (e) {
             setError('Помилка оновлення профілю. Спробуйте пізніше.');

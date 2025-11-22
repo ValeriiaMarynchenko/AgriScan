@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = os.environ.get('MINIO_SECRET_KEY', 'minio_secret_key')
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file="../frontend/.env",
         extra="ignore"
     )
 

@@ -90,14 +90,14 @@ class User(Document):
 # 3. Приклад використання (не виконується в MongoEngine без ініціалізації)
 # =========================================================================
 
-connect_to_mongo()
-# Створення нового користувачами
-new_user = User(
-    email="admin@example.com",
-    password_hash="...ваш_хеш...",
-    name="Головний Адмін",
-    type="Admin",
-    plan_id="premium_yearly"
-)
-new_user.save()
-print(f"Створено: {new_user}")
+# connect_to_mongo()
+# # Створення нового користувачами
+# new_user = User(
+#     email="admin@example.com",
+#     password_hash="...ваш_хеш...",
+#     name="Головний Адмін",
+#     type="Admin",
+#     plan_id="premium_yearly"
+# )
+# new_user.save()
+# print(f"Створено: {new_user}")
