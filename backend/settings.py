@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     AWS_STORAGE_BUCKET_NAME: str = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'agriscan-media')
 
     # НОВІ ПОЛЯ ДЛЯ КОНФІГУРАЦІЇ S3/MinIO
-    AWS_S3_ENDPOINT_URL: str = os.environ.get('AWS_S3_ENDPOINT_URL', 'http://minio:9000')  # Наприклад, для MinIO
+    AWS_S3_ENDPOINT_URL: str = os.environ.get('AWS_S3_ENDPOINT_URL', 'minio:9000')  # Наприклад, для MinIO
     AWS_REGION: str = os.environ.get('AWS_REGION', 'us-east-1')
     AWS_S3_SECURE: bool = os.environ.get('AWS_S3_SECURE', 'False') == 'True'  # Використовувати HTTPS/SSL
 

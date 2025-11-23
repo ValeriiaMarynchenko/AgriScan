@@ -1,6 +1,6 @@
 import {useState, useEffect} from "react";
 import {useAuth} from "../features/Auth/AuthProvider";
-import {secureFetch} from "../App";
+import {secureFetch} from "../api/api.js";
 
 const ProfilePage = () => {
     const { user, loadUserFromToken } = useAuth();

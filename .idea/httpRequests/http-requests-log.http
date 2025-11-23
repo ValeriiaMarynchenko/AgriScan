@@ -1,0 +1,54 @@
+GET http://localhost:8000/auth/users/
+User-Agent: IntelliJ HTTP Client/PyCharm 2025.2.4
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+<> 2025-11-22T184354.404.json
+
+###
+
+GET http://localhost:8000/api/v1/auth/users/
+User-Agent: IntelliJ HTTP Client/PyCharm 2025.2.4
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+<> 2025-11-22T183846.405.json
+
+###
+
+GET http://localhost:8000/api/v1/auth/users/
+User-Agent: IntelliJ HTTP Client/PyCharm 2025.2.4
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+<> 2025-11-22T183839.405.json
+
+###
+
+GET http://localhost:8000/auth/users/
+User-Agent: IntelliJ HTTP Client/PyCharm 2025.2.4
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+<> 2025-11-22T183704.404.json
+
+###
+
+GET http://localhost:8000/auth/users/me/
+User-Agent: IntelliJ HTTP Client/PyCharm 2025.2.4
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+<> 2025-11-22T135237.401.json
+
+###
+
+GET http://localhost:8000/health
+User-Agent: IntelliJ HTTP Client/PyCharm 2025.2.4
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+<> 2025-11-22T135159.200.json
+
+###
+

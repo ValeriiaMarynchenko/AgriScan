@@ -31,7 +31,7 @@ export async function apiRequest(path, method = "GET", body = null, token = null
 /**
  * secureFetch - обгортка над стандартним fetch.
  * Автоматично додає токен авторизації та базовий URL.
- * * @param {string} endpoint - частина шляху, наприклад '/auth/users/me/'
+ * @param {string} endpoint - частина шляху, наприклад '/auth/users/me/'
  * @param {object} options - налаштування запиту (method, body, headers...)
  * @param {boolean} requiresAuth - чи додавати токен (за замовчуванням true)
  */
@@ -67,8 +67,8 @@ export const secureFetch = async (endpoint, options = {}, requiresAuth = true) =
     if (response.status === 401 && requiresAuth) {
         // Тут можна додати логіку оновлення токена (refresh token flow)
         // Або просто очистити сторінку
-        // localStorage.removeItem(TOKEN_KEY);
-        // window.location.href = '/login';
+        localStorage.removeItem(TOKEN_KEY);
+        window.location.href = '/login';
         throw new Error('Unauthorized');
     }
 

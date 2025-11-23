@@ -27,8 +27,5 @@ COPY . .
 # Виставляємо порт, на якому працюватиме Django
 EXPOSE 8000
 
-# Команда запуску Gunicorn або Django runserver
-# Для продакшну використовуйте Gunicorn:
-# CMD ["gunicorn", "--bind", "0.0.0.0:8000", "project_core.wsgi:application"]
 # Для розробки:
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000", "--settings=project_core.settings.dev"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
