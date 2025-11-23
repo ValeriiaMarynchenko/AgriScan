@@ -12,6 +12,16 @@ class Settings(BaseSettings):
     Всі значення завантажуються зі змінних оточення або використовують значення за замовчуванням.
     """
 
+    # settings.py
+
+    # --- Налаштування Пошти для Gmail ---
+    EMAIL_HOST: str = 'smtp.gmail.com'  # SMTP-сервер Gmail
+    EMAIL_PORT: int = 587  # Порт для TLS
+    EMAIL_HOST_USER: str = 'agriscan.krnu@gmail.com'  # Повна адреса вашого облікового запису Gmail
+    EMAIL_HOST_PASSWORD: str = 'vzzxauzogsswbrxp'  # Згенерований App Password
+    EMAIL_USE_TLS: bool = True  # Використовувати шифрування TLS
+    DEFAULT_FROM_EMAIL: str = 'agriscan.krnu@gmail.com'  # Адреса, від якої надсилаються листи
+
     # --- СЕКЦІЯ БЕЗПЕКИ ---
     SECRET_KEY: str = "fastapi-insecure-ri)hd7&x5_hj(ho1w9ai#1j-r!n&r1li)ju6!t)c#=&ovdcwd^"
     DEBUG: bool = True
@@ -26,12 +36,10 @@ class Settings(BaseSettings):
     MONGO_USER: str = os.environ.get('MONGO_USER', 'mongo_user')
     MONGO_PASSWORD: str = os.environ.get('MONGO_PASSWORD', 'mongo_password')
 
-    # Формування MONGO_URL з автентифікацією (якщо надані облікові дані)
     if MONGO_USER and MONGO_PASSWORD:
-        # MONGO_URL: str = f"mongodb://mongo_user:mongo_password@localhost:27017/?authMechanism=DEFAULT"
-        MONGO_URL: str = f"mongodb://{MONGO_USER}:{MONGO_PASSWORD}@{DB_HOST}:{DB_PORT}/?authMechanism=DEFAULT"
+        MONGO_URI: str = f"mongodb://{MONGO_USER}:{MONGO_PASSWORD}@{DB_HOST}:{DB_PORT}/?authMechanism=DEFAULT"
     else:
-        MONGO_URL: str = f"mongodb://{DB_HOST}:{DB_PORT}"
+        MONGO_URI: str = f"mongodb://{DB_HOST}:{DB_PORT}"
 
     # --- JWT / АВТЕНТИФІКАЦІЯ ---
     JWT_SECRET: str = SECRET_KEY

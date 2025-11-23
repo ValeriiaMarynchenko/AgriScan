@@ -21,10 +21,13 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - agriscan_network
     
   # ----------------------------------------------------
   # 2. СЛУЖБА БАЗЫ МЕТАДАННЫХ (MONGODB)
   # ----------------------------------------------------
+# ВИПРАВЛЕНИЙ БЛОК MONGODB
   mongodb:
     image: mongo:latest
     container_name: agriscan_mongodb
@@ -33,25 +36,48 @@ services:
     volumes:
       - mongo_data:/data/db
     environment:
+      # Ваші облікові дані
       MONGO_INITDB_ROOT_USERNAME: mongo_user
       MONGO_INITDB_ROOT_PASSWORD: mongo_password
+    healthcheck:
+      test: [
+        "CMD",
+        "mongosh",
+        "admin", # База даних аутентифікації
+        "--eval",
+        "db.runCommand({ping: 1})",
+        "--username",
+        "mongo_user",
+        "--password",
+        "mongo_password",
+        "--quiet"
+      ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agriscan_network
 
   # ----------------------------------------------------
-  # 3. СЛУЖБА БЭКЕНДА (DJANGO/FLASK)
+  # 3. СЛУЖБА БЭКЕНДА
   # ----------------------------------------------------
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: agriscan_backend
-    command: uvicorn main:app --reload --host 0.0.0.0 --port 8000 # Замените на вашу команду
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8000
     volumes:
       - ./backend:/apps
     ports:
       - "8000:8000"
     depends_on:
-      - mongodb
-      - minio
+      redis:
+        condition: service_started # Це добре, але не завжди гарантує готовність БД
+      mongodb:
+        condition: service_healthy
+      minio:
+        condition: service_started
     environment:
       # Настройки MongoDB
       MONGO_URI: mongodb://mongo_user:mongo_password@mongodb:27017/agriscan_db
@@ -60,7 +86,41 @@ services:
       MINIO_ACCESS_KEY: minio_admin_user
       MINIO_SECRET_KEY: minio_secure_password
       MINIO_BUCKET_NAME: agriscan-files
-      # Общие настройки
+    networks:
+      - agriscan_network
+
+
+# message broker
+  redis:
+    image: redis:7-alpine # Легкий офіційний образ Redis
+    container_name: agriscan_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly no
+    networks:
+      - agriscan_network
+
+# celery worker
+  worker:
+    build:
+      context: ./backend
+#      dockerfile: Dockerfile
+    container_name: agriscan_worker
+    volumes:
+      - ./backend:/apps
+    # Команда для запуску Celery Worker
+    command: celery -A tasks worker -l info
+    # Celery залежить від брокера (Redis)
+    depends_on:
+      - redis
+      - backend
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    networks:
+      - agriscan_network
 
   # ----------------------------------------------------
   # 4. СЛУЖБА AI SERVICE (FASTAPI/FLASK)
@@ -83,6 +143,8 @@ services:
       MINIO_ACCESS_KEY: minio_admin_user
       MINIO_SECRET_KEY: minio_secure_password
       MINIO_BUCKET_NAME: agriscan-files
+    networks:
+      - agriscan_network
 
   # ----------------------------------------------------
   # 5. СЛУЖБА ФРОНТЕНДА (NODE/NGINX)
@@ -96,8 +158,15 @@ services:
       - "80:80" # Или 80, если вы используете Nginx
     depends_on:
       - backend
+    networks:
+      - agriscan_network
 
 # Определения Volumes для постоянного хранения данных
 volumes:
+  redis_data:
   minio_data:
   mongo_data:
+
+networks:
+  agriscan_network:
+    driver: bridge

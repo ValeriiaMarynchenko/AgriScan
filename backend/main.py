@@ -13,7 +13,7 @@ from datetime import datetime
 from minio import Minio, error as minio_errors
 import uvicorn
 from io import BytesIO
-
+from tasks import send_welcome_email
 # --- ІНІЦІАЛІЗАЦІЯ ---
 
 # Виправлено: tokenUrl має відповідати роуту входу
@@ -80,8 +80,8 @@ async def register_user(user_data: UserCreate, db: AsyncIOMotorClient = Depends(
     }
 
     # 4. Збереження
-    result = await db["users"].insert_one(new_user) # <-- ДОДАНО await
-
+    result = await db["users"].insert_one(new_user)
+    send_welcome_email.delay(user_data.email)
     return {"message": "User created successfully", "id": str(result.inserted_id)}
 
 
@@ -92,12 +92,11 @@ async def login_for_access_token(form_data: UserLogin, db: AsyncIOMotorClient = 
     Приймає JSON {email, password}.
     Повертає JWT Access Token.
     """
-    # Пошук користувача
     # user = await db["users"].find_one({"email": form_data.email})
     user = await db.users.find_one({"email": form_data.email},{"hashed_password": 1, "name": 1, "_id": 1, "email": 1})
 
     hashed_password = user.get("hashed_password") if user else None
-    # Перевірка пароля
+
     if not user or not verify_password(form_data.password, hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -105,23 +104,21 @@ async def login_for_access_token(form_data: UserLogin, db: AsyncIOMotorClient = 
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Генерація токена
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user["email"], "user_id": str(user["_id"])},
         expires_delta=access_token_expires
     )
 
-    # У вас тут дві різні структури, повертаємо повну:
     return {
-        "access_token": access_token, # Повертаємо згенерований токен
+        "access_token": access_token,
         "token_type": "bearer",
         "user_name": user.get("name", ""),
         "user_id": str(user["_id"])
     }
 
 
-# --- ЗАХИЩЕНИЙ РОУТ (приклад) ---
+# --- ЗАХИЩЕНИЙ РОУТ ---
 async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncIOMotorClient = Depends(get_database)):
     """Допоміжна функція для отримання юзера з токена"""
     credentials_exception = HTTPException(
@@ -202,7 +199,7 @@ async def upload_field_image(
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    # Просто повертаємо статус без перепідключення, оскільки підключення керується on_startup/on_shutdown
+    await connect_to_mongo()
     return {"status": "ok"}
 
 if __name__ == "__main__":
