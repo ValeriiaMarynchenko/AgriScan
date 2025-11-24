@@ -39,6 +39,7 @@ services:
       # Ваші облікові дані
       MONGO_INITDB_ROOT_USERNAME: mongo_user
       MONGO_INITDB_ROOT_PASSWORD: mongo_password
+      MONGO_DB_NAME: agriscan_db
     healthcheck:
       test: [
         "CMD",
@@ -68,7 +69,7 @@ services:
     container_name: agriscan_backend
     command: uvicorn main:app --reload --host 0.0.0.0 --port 8000
     volumes:
-      - ./backend:/apps
+      - ./backend:/app
     ports:
       - "8000:8000"
     depends_on:
@@ -80,7 +81,7 @@ services:
         condition: service_started
     environment:
       # Настройки MongoDB
-      MONGO_URI: mongodb://mongo_user:mongo_password@mongodb:27017/agriscan_db
+      MONGO_URI: mongodb://mongo_user:mongo_password@mongodb:27017/agriscan_db?authSource=admin
       # Настройки MinIO
       MINIO_ENDPOINT: minio:9000
       MINIO_ACCESS_KEY: minio_admin_user

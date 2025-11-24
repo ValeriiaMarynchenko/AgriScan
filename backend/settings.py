@@ -25,21 +25,25 @@ class Settings(BaseSettings):
     # --- СЕКЦІЯ БЕЗПЕКИ ---
     SECRET_KEY: str = "fastapi-insecure-ri)hd7&x5_hj(ho1w9ai#1j-r!n&r1li)ju6!t)c#=&ovdcwd^"
     DEBUG: bool = True
-    ALLOWED_HOSTS: list[str] = ["localhost", "127.0.0.1", "*"]
+    ALLOWED_HOSTS: list[str] = ["localhost", "127.0.0.1", "mongodb", "0.0.0.0", "*"]
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
     # --- БАЗА ДАНИХ (MongoDB) ---
-    MONGO_DB_NAME: str = os.environ.get('MONGO_DB_NAME', 'agromonitoring_db')
-    DB_HOST: str = os.environ.get('DB_HOST', 'localhost')
+    MONGO_DB_NAME: str = os.environ.get('MONGO_DB_NAME', 'agriscan_db')
+    DB_HOST: str = os.environ.get('DB_HOST', 'mongodb:27017')
     DB_PORT: int = int(os.environ.get('DB_PORT', 27017))
 
     # НОВІ ПОЛЯ АВТЕНТИФІКАЦІЇ DB
     MONGO_USER: str = os.environ.get('MONGO_USER', 'mongo_user')
     MONGO_PASSWORD: str = os.environ.get('MONGO_PASSWORD', 'mongo_password')
-
-    if MONGO_USER and MONGO_PASSWORD:
-        MONGO_URI: str = f"mongodb://{MONGO_USER}:{MONGO_PASSWORD}@{DB_HOST}:{DB_PORT}/?authMechanism=DEFAULT"
-    else:
-        MONGO_URI: str = f"mongodb://{DB_HOST}:{DB_PORT}"
+    # MONGO_URI: str = "mongodb://mongo_user:mongo_password@localhost:27017/?authMechanism=DEFAULT"
+    #
+    # if MONGO_USER and MONGO_PASSWORD:
+    #     MONGO_URI: str = f"mongodb://{MONGO_USER}:{MONGO_PASSWORD}@{DB_HOST}:{DB_PORT}/?authMechanism=DEFAULT"
+    # else:
+    #     MONGO_URI: str = f"mongodb://{DB_HOST}:{DB_PORT}"
+    MONGO_URI: str | None = os.environ.get("MONGO_URI")
 
     # --- JWT / АВТЕНТИФІКАЦІЯ ---
     JWT_SECRET: str = SECRET_KEY
@@ -65,7 +69,7 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = os.environ.get('MINIO_SECRET_KEY', 'minio_secret_key')
 
     model_config = SettingsConfigDict(
-        env_file="../frontend/.env",
+        env_file=".env",
         extra="ignore"
     )
 

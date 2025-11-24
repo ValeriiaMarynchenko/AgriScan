@@ -4,7 +4,7 @@ from jose import jwt, JWTError
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import timedelta
 from bson import ObjectId
-from security import get_password_hash, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, verify_password
+from security import get_password_hash, create_access_token, verify_password
 from dependencies import connect_to_mongo, close_mongo_connection, get_database
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel, EmailStr, Field
@@ -18,12 +18,17 @@ from tasks import send_welcome_email
 
 # Виправлено: tokenUrl має відповідати роуту входу
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/jwt/create/")
-app = FastAPI(title="AgriScan Backend", on_startup=[connect_to_mongo], on_shutdown=[close_mongo_connection])
+app = FastAPI(title="AgriScan_FastAPI_Backend", on_startup=[connect_to_mongo], on_shutdown=[close_mongo_connection])
 
 # CORS-requests
 origins = ["http://localhost:5173", "http://localhost:3000"]
+
 app.add_middleware(
-    CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 # Клієнт MinIO
@@ -104,10 +109,8 @@ async def login_for_access_token(form_data: UserLogin, db: AsyncIOMotorClient = 
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user["email"], "user_id": str(user["_id"])},
-        expires_delta=access_token_expires
+        data={"sub": user["email"], "user_id": str(user["_id"])}, expires_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
 
     return {
@@ -199,12 +202,13 @@ async def upload_field_image(
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    await connect_to_mongo()
-    return {"status": "ok"}
+    if connect_to_mongo():
+        return {"status": "ok"}
+    else:
+        return {"status": "dead"}
 
 if __name__ == "__main__":
-    # ВИДАЛЕНО: Синхронний код MongoEngine тут не працюватиме коректно з Motor/FastAPI.
-    # Uvicorn сам ініціалізує додаток.
     uvicorn.run("main:app", host="localhost", port=8000, reload=True)
+
 # --- ЗАПУСК ---
 # uvicorn main:app --reload --host 0.0.0.0 --port 8000

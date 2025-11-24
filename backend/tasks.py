@@ -12,27 +12,26 @@ celery_app = Celery(
     backend=settings.CELERY_RESULT_BACKEND
 )
 
-# Налаштування Celery (якщо потрібно)
-celery_app.conf.update(
-    task_serializer='json',
-    result_serializer='json',
-    accept_content=['json'],
-    timezone='UTC',
-    enable_utc=True,
-)
+# # Налаштування Celery (якщо потрібно)
+# celery_app.conf.update(
+#     task_serializer='json',
+#     result_serializer='json',
+#     accept_content=['json'],
+#     timezone='UTC',
+#     enable_utc=True,
+# )
 
 
 @celery_app.task(name="process_field_analysis")
-def process_field_analysis(field_id: str, analysis_type: str):
+def process_field_analysis(field_id: str):
     """
     Асинхронна задача для виконання тривалого аналізу поля.
 
     Це імітує роботу, яку раніше виконувала б фонова задача Django.
     """
-    print(f"INFO: Starting {analysis_type} analysis for field {field_id}...")
+    print(f"INFO: Starting analysis for field {field_id}...")
 
-    # Імітація тривалого процесу (наприклад, обробка супутникових знімків)
-    time.sleep(5)
+    time.sleep(5) #TODO wait AI analise function return result
 
     result = {"status": "completed", "field_id": field_id, "data": [12.5, 13.1]}
 

@@ -17,8 +17,6 @@ async def connect_to_mongo():
             serverSelectionTimeoutMS=5000
         )
 
-        await mongo_client.admin.command('ping')
-
         mongo_db = mongo_client[settings.MONGO_DB_NAME]
         print("INFO: Successfully connected to MongoDB.")
 
@@ -36,19 +34,24 @@ async def close_mongo_connection():
 
 def get_db_client() -> AsyncIOMotorClient:
     """Залежність, що повертає клієнт MongoDB."""
+    global mongo_client, mongo_db
     if mongo_client is None:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Database client is unavailable."
-        )
+        mongo_client = AsyncIOMotorClient(settings.MONGO_URI, serverSelectionTimeoutMS=5000)
+        mongo_db = mongo_client[settings.MONGO_DB_NAME]
     return mongo_client
 
-def get_database() -> AsyncIOMotorDatabase:
+
+def get_database():
     """Залежність, що повертає базу даних MongoDB."""
-    if mongo_db is None:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Database client is unavailable."
-        )
-    return mongo_db
+    get_db_client()
+    try:
+        yield mongo_db
+    finally:
+        pass
+    # if mongo_db is None:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    #         detail="Database client is unavailable."
+    #     )
+    # return mongo_db
 

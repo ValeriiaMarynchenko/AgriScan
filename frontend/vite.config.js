@@ -7,11 +7,9 @@ export default defineConfig({
 
   server: {
     proxy: {
-      '/api': {
-        target: 'http://localhost:8000', // Адреса вашого бекенду
-        changeOrigin: true,
-        secure: false,
-      },
+    '/api': 'http://localhost:8000',
+    '/auth': 'http://localhost:8000'
     },
-  },
+    },
+
 });
