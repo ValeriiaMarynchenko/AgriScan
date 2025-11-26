@@ -54,7 +54,7 @@ const LoginPage = ({ navigate, onSuccess }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-900">
-      <Card title="Увійти в акаунт">
+      <Card title="Увійти в акаунт" className="w-full max-w-md">
         {error && <div className="text-sm text-red-400 bg-red-900 p-3 rounded-lg mb-3">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="email" required placeholder="Електронна пошта" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-3 bg-gray-700 text-white rounded-lg focus:ring-indigo-500 focus:border-indigo-500 border border-gray-600" aria-label="Електронна пошта"/>

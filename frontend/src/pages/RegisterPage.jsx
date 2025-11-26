@@ -65,7 +65,7 @@ const RegisterPage = ({ navigate }) => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-900">
-      <Card title="Створити Обліковий Запис">
+      <Card title="Створити Обліковий Запис" className="w-full max-w-md">
         {message && <div className="text-sm text-green-400 bg-green-900 p-3 rounded-lg mb-3">{message}</div>}
         {error && <div className="text-sm text-red-400 bg-red-900 p-3 rounded-lg mb-3">{error}</div>}
 

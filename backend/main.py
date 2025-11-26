@@ -21,7 +21,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/jwt/create/")
 app = FastAPI(title="AgriScan_FastAPI_Backend", on_startup=[connect_to_mongo], on_shutdown=[close_mongo_connection])
 
 # CORS-requests
-origins = ["http://localhost:5173", "http://localhost:3000"]
+origins = ["http://localhost:5173", "http://localhost:3000", "http://localhost:80", "*"]
 
 app.add_middleware(
     CORSMiddleware,

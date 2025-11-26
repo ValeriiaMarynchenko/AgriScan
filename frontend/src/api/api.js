@@ -1,8 +1,8 @@
 export const TOKEN_KEY = 'agriscan_access_token';
 export const REFRESH_KEY = 'agriscan_refresh_token';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-
+export const API_BASE_URL =  "http://localhost:8000" || "http://0.0.0.0:8000";
+// = import.meta.env.VITE_API_BASE_URL
 export async function apiRequest(path, method = "GET", body = null, token = null) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
