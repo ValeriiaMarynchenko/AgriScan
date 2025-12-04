@@ -124,28 +124,28 @@ services:
       - agriscan_network
 
   # ----------------------------------------------------
-  # 4. СЛУЖБА AI SERVICE (FASTAPI/FLASK)
+  # 4. СЛУЖБА AI SERVICE (FASTAPI) # TODO maybe will be uncommented(now it isn't service but package)
   # ----------------------------------------------------
-  ai_service:
-    build:
-      context: ./ai_service
-      dockerfile: Dockerfile
-    container_name: agriscan_ai_service
-    command: uvicorn app.api:app --host 0.0.0.0 --port 8001 # Замените на вашу команду
-    volumes:
-      - ./ai_service:/app
-    ports:
-      - "8001:8001"
-    depends_on:
-      - minio
-    environment:
-      # Настройки MinIO (используются для загрузки/скачивания изображений)
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: minio_admin_user
-      MINIO_SECRET_KEY: minio_secure_password
-      MINIO_BUCKET_NAME: agriscan-files
-    networks:
-      - agriscan_network
+#  ai_service:
+#    build:
+#      context: backend/ai_service
+#      dockerfile: Dockerfile
+#    container_name: agriscan_ai_service
+#    command: uvicorn app.api:app --host 0.0.0.0 --port 8001
+#    volumes:
+#      - ./ai_service:/app
+#    ports:
+#      - "8001:8001"
+#    depends_on:
+#      - minio
+#    environment:
+#      # Настройки MinIO (используются для загрузки/скачивания изображений)
+#      MINIO_ENDPOINT: minio:9000
+#      MINIO_ACCESS_KEY: minio_admin_user
+#      MINIO_SECRET_KEY: minio_secure_password
+#      MINIO_BUCKET_NAME: agriscan-files
+#    networks:
+#      - agriscan_network
 
   # ----------------------------------------------------
   # 5. СЛУЖБА ФРОНТЕНДА (NODE/NGINX)

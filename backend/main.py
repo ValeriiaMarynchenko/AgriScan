@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from jose import jwt, JWTError
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import timedelta
@@ -14,9 +15,17 @@ from minio import Minio, error as minio_errors
 import uvicorn
 from io import BytesIO
 from tasks import send_welcome_email
+from ai_service import (
+    initialize_ai_services,
+    CORN_MODEL, POTATO_MODEL, WEED_MODEL,
+    predict_corn, predict_potato, predict_weed_segmentation
+)
+# Імпортуємо класи, щоб вони були доступні для uvicorn
+from ai_service.corn.predict_corn_disease import ClassificationCNN as CornCNN
+from ai_service.potato.predict_potato_disease import ClassificationCNN as PotatoCNN
+
 # --- ІНІЦІАЛІЗАЦІЯ ---
 
-# Виправлено: tokenUrl має відповідати роуту входу
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/jwt/create/")
 app = FastAPI(title="AgriScan_FastAPI_Backend", on_startup=[connect_to_mongo], on_shutdown=[close_mongo_connection])
 
@@ -154,51 +163,199 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
 
 
 # --- ОТРИМАННЯ ФАЙЛУ (UPLOAD) ---
-@app.post("/api/fields/upload", tags=["Fields"])
-async def upload_field_image(
-        field_id: str = Form(...),
-        file: UploadFile = File(...),
-        current_user: dict = Depends(get_current_user),
-        db: AsyncIOMotorClient = Depends(get_database)
-):
+# --- ДОПОМІЖНІ ФУНКЦІЇ ---
+
+def upload_file_to_minio(file_content: bytes, object_name: str, content_type: str):
     """
-    Завантаження зображення поля в MinIO.
+    Завантажує вміст файлу в MinIO.
     """
-    if file.content_type not in ["image/jpeg", "image/png", "image/tiff"]:
-        raise HTTPException(400, detail="Invalid file type. Only JPEG, PNG, TIFF allowed.")
-
-    file_content = await file.read()
-    file_size = len(file_content)
-
-    # Визначення шляху (об'єктного ключа) у MinIO
-    object_name = f"fields/{field_id}/{file.filename}"
-
     try:
         MINIO_CLIENT.put_object(
             bucket_name=MINIO_BUCKET,
             object_name=object_name,
             data=BytesIO(file_content),
-            length=file_size,
-            content_type=file.content_type
+            length=len(file_content),
+            content_type=content_type
         )
+        return object_name
     except minio_errors.S3Error as e:
         print(f"MinIO Error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to upload file to storage."
+            detail="Failed to upload file to storage (MinIO)."
         )
 
-    # 4. Оновлення запису в БД (зберігаємо шлях до об'єкта)
-    await db["fields"].update_one( # <-- ДОДАНО await
-        {"_id": ObjectId(field_id)},
-        {"$set": {"image_key": object_name, "updated_at": datetime.utcnow()}}
-    )
 
-    return {
-        "message": "File uploaded successfully to MinIO",
-        "object_key": object_name,
-        "filename": file.filename
+# --- НОВІ РОУТИ ДЛЯ AI АНАЛІЗУ ---
+
+@app.post("/api/fields/upload/corn", tags=["AI Prediction"])
+async def analyze_corn_disease(
+        file: UploadFile = File(..., description="Зображення листя кукурудзи"),
+        current_user: dict = Depends(get_current_user),
+        db: AsyncIOMotorClient = Depends(get_database)
+):
+    """
+    Класифікація хвороб кукурудзи. Приймає 1 файл зображення.
+    """
+    if not CORN_MODEL:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail="Corn model is not initialized.")
+    if file.content_type not in ["image/jpeg", "image/png"]:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid file type. Only JPEG and PNG allowed.")
+
+    file_content = await file.read()
+
+    # 1. АНАЛІЗ
+    try:
+        predicted_class, confidence = predict_corn(CORN_MODEL, file_content)
+    except ValueError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        print(f"Corn Prediction Error: {e}")
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Failed to process image with Corn model: {e}")
+
+    # 2. ЗБЕРЕЖЕННЯ В MINIO
+    upload_time = datetime.utcnow()
+    original_object_name = f"analysis/{current_user['_id']}/corn/{upload_time.isoformat()}_{file.filename}"
+    upload_file_to_minio(file_content, original_object_name, file.content_type)
+
+    # 3. ЛОГУВАННЯ В MONGODB
+    analysis_record = {
+        "user_id": str(current_user["_id"]),
+        "model": "corn_classification",
+        "uploaded_at": upload_time,
+        "original_file_key": original_object_name,
+        "prediction": {
+            "class": predicted_class,
+            "confidence": confidence
+        }
     }
+    await db["analysis_logs"].insert_one(analysis_record)
+
+    return JSONResponse(content={
+        "message": "Corn disease classified successfully.",
+        "prediction": predicted_class,
+        "confidence": f"{confidence * 100:.2f}%",
+        "file_key": original_object_name
+    })
+
+
+@app.post("/api/fields/upload/potato", tags=["AI Prediction"])
+async def analyze_potato_disease(
+        file: UploadFile = File(..., description="Зображення листя картоплі"),
+        current_user: dict = Depends(get_current_user),
+        db: AsyncIOMotorClient = Depends(get_database)
+):
+    """
+    Класифікація хвороб картоплі. Приймає 1 файл зображення.
+    """
+    if not POTATO_MODEL:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail="Potato model is not initialized.")
+    if file.content_type not in ["image/jpeg", "image/png"]:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid file type. Only JPEG and PNG allowed.")
+
+    file_content = await file.read()
+
+    # 1. АНАЛІЗ
+    try:
+        predicted_class, confidence = predict_potato(POTATO_MODEL, file_content)
+    except ValueError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        print(f"Potato Prediction Error: {e}")
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Failed to process image with Potato model: {e}")
+
+    # 2. ЗБЕРЕЖЕННЯ В MINIO
+    upload_time = datetime.utcnow()
+    original_object_name = f"analysis/{current_user['_id']}/potato/{upload_time.isoformat()}_{file.filename}"
+    upload_file_to_minio(file_content, original_object_name, file.content_type)
+
+    # 3. ЛОГУВАННЯ В MONGODB
+    analysis_record = {
+        "user_id": str(current_user["_id"]),
+        "model": "potato_classification",
+        "uploaded_at": upload_time,
+        "original_file_key": original_object_name,
+        "prediction": {
+            "class": predicted_class,
+            "confidence": confidence
+        }
+    }
+    await db["analysis_logs"].insert_one(analysis_record)
+
+    return JSONResponse(content={
+        "message": "Potato disease classified successfully.",
+        "prediction": predicted_class,
+        "confidence": f"{confidence * 100:.2f}%",
+        "file_key": original_object_name
+    })
+
+
+@app.post("/api/fields/upload/weed", tags=["AI Prediction"])
+async def analyze_weed_segmentation(
+        rgb_file: UploadFile = File(..., alias="rgb_image", description="RGB зображення поля"),
+        aux_file: UploadFile = File(None, alias="aux_image",
+                                    description="Додаткове (наприклад, NIR) зображення (необов'язково)"),
+        current_user: dict = Depends(get_current_user),
+        db: AsyncIOMotorClient = Depends(get_database)
+):
+    """
+    Сегментація бур'янів (UNET). Приймає 1 (RGB) або 2 (RGB + Aux) файли.
+    Повертає посилання на згенерований файл-маску.
+    """
+    if not WEED_MODEL:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail="Weed model is not initialized.")
+    if rgb_file.content_type not in ["image/jpeg", "image/png"]:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid file type for RGB. Only JPEG and PNG allowed.")
+
+    rgb_content = await rgb_file.read()
+
+    # 1. АНАЛІЗ (СЕГМЕНТАЦІЯ)
+    try:
+        # predict_weed_segmentation повертає байтову послідовність PNG маски
+        # WEED_MODEL - заглушка/реальна модель UNET
+        mask_bytes = predict_weed_segmentation(WEED_MODEL, rgb_content)
+    except Exception as e:
+        print(f"Weed Prediction Error: {e}")
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Failed to process image with Weed model: {e}")
+
+    upload_time = datetime.utcnow()
+
+    # 2. ЗБЕРЕЖЕННЯ ОРИГІНАЛЬНИХ ФАЙЛІВ У MINIO
+    original_rgb_object_name = f"analysis/{current_user['_id']}/weed/{upload_time.isoformat()}_{rgb_file.filename}"
+    upload_file_to_minio(rgb_content, original_rgb_object_name, rgb_file.content_type)
+
+    aux_object_name = None
+    if aux_file:
+        aux_content = await aux_file.read()
+        aux_object_name = f"analysis/{current_user['_id']}/weed/{upload_time.isoformat()}_aux_{aux_file.filename}"
+        upload_file_to_minio(aux_content, aux_object_name, aux_file.content_type)
+
+    # 3. ЗБЕРЕЖЕННЯ РЕЗУЛЬТУЮЧОЇ МАСКИ У MINIO
+    mask_object_name = f"analysis/{current_user['_id']}/weed/{upload_time.isoformat()}_mask.png"
+    upload_file_to_minio(mask_bytes, mask_object_name, "image/png")
+
+    # 4. ЛОГУВАННЯ В MONGODB
+    analysis_record = {
+        "user_id": str(current_user["_id"]),
+        "model": "weed_segmentation",
+        "uploaded_at": upload_time,
+        "original_file_key": original_rgb_object_name,
+        "aux_file_key": aux_object_name,
+        "result_mask_key": mask_object_name,
+        "prediction": {"status": "Mask generated"}
+    }
+    await db["analysis_logs"].insert_one(analysis_record)
+
+    return JSONResponse(content={
+        "message": "Weed segmentation completed successfully.",
+        "original_rgb_file_key": original_rgb_object_name,
+        "aux_file_key": aux_object_name,
+        "result_mask_key": mask_object_name
+    })
+
 
 @app.get("/health", tags=["Health"])
 async def health_check():
@@ -207,8 +364,12 @@ async def health_check():
     else:
         return {"status": "dead"}
 
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="localhost", port=8000, reload=True)
 
+if __name__ == "__main__":
+    # Додаємо CornCNN та PotatoCNN до globals для uvicorn (потрібно для reload=True)
+    globals()['CornCNN'] = CornCNN
+    globals()['PotatoCNN'] = PotatoCNN
+
+    uvicorn.run("main:app", host="localhost", port=8000, reload=True)
 # --- ЗАПУСК ---
 # uvicorn main:app --reload --host 0.0.0.0 --port 8000
